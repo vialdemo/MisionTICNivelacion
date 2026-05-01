@@ -13,38 +13,39 @@ class ContentPage extends StatefulWidget {
 }
 
 class _ContentPageState extends State<ContentPage> {
-  int _selectIndex = 0;
-  AuthenticationController authenticationController = Get.find();
-  final FirestoreController firestoreController = Get.find();
-  final ThemeController themeController = Get.find();
-  static final List<Widget> _widgets = <Widget>[
+  int _selectedIndex = 0;
+  final AuthenticationController _authController = Get.find();
+  final FirestoreController _firestoreController = Get.find();
+  final ThemeController _themeController = Get.find();
+
+  static final List<Widget> _pages = <Widget>[
     const GroupWidget(),
-    SesionWidget()
+    SesionWidget(),
   ];
 
-  _onItemTapped(int index) {
+  void _onItemTapped(int index) {
     setState(() {
-      _selectIndex = index;
+      _selectedIndex = index;
     });
   }
 
-  _logout() async {
+  Future<void> _logout() async {
     try {
-      await authenticationController.logOut();
+      await _authController.logOut();
     } catch (e) {
-      print(e);
+      Get.snackbar('Error', e.toString());
     }
   }
 
   @override
   void initState() {
-    firestoreController.suscribeUpdates();
     super.initState();
+    _firestoreController.subscribeUpdates();
   }
 
   @override
   void dispose() {
-    firestoreController.unsuscribeUpdates();
+    _firestoreController.unsubscribeUpdates();
     super.dispose();
   }
 
@@ -52,31 +53,24 @@ class _ContentPageState extends State<ContentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        controller: themeController,
-        tile: Text("Bienvenido ${authenticationController.userEmail()}"),
+        controller: _themeController,
+        tile: Text('Bienvenido ${_authController.userEmail()}'),
         context: context,
-        onLogout: () {
-          _logout();
-        },
+        onLogout: _logout,
       ),
-      body: _widgets.elementAt(_selectIndex),
+      body: _pages.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(
-              Icons.groups_outlined,
-              key: ValueKey("groupsTab"),
-            ),
-            label: "Grupos",
+            icon: Icon(Icons.groups_outlined, key: ValueKey('groupsTab')),
+            label: 'Grupos',
           ),
           BottomNavigationBarItem(
-              icon: Icon(
-                Icons.more_time_outlined,
-                key: ValueKey("sesionsTab"),
-              ),
-              label: "Sesiones")
+            icon: Icon(Icons.more_time_outlined, key: ValueKey('sesionsTab')),
+            label: 'Sesiones',
+          ),
         ],
-        currentIndex: _selectIndex,
+        currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
     );
