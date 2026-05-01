@@ -1,56 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_notifier.dart';
-import 'package:loggy/loggy.dart';
 import 'package:misiontic_team_management/data/model/group.dart';
 import 'package:misiontic_team_management/domain/controller/firestore_controller.dart';
 import 'package:misiontic_team_management/ui/pages/add_group_page.dart';
-import 'package:prompt_dialog/prompt_dialog.dart';
 
-class GroupWidget extends StatefulWidget {
+class GroupWidget extends StatelessWidget {
   const GroupWidget({Key? key}) : super(key: key);
 
   @override
-  State<GroupWidget> createState() => _GroupWidgetState();
-}
-
-class _GroupWidgetState extends State<GroupWidget> {
-  final FirestoreController firebaseController = Get.find();
-
-  @override
   Widget build(BuildContext context) {
+    final FirestoreController firestoreController = Get.find();
     return Scaffold(
-        key: const ValueKey("groupsScaffold"),
-        body: Center(
-          // TODO
-          //'Aquí colocar la lista de grupos, recordar que se se debe escuchar el controlador (groups) con obx'
-          child: 
-            Obx(
-              () => ListView.builder(
-                itemCount: firebaseController.groups.length,
-                itemBuilder: (BuildContext context, int index) {
-                return _buildItem(context, firebaseController.groups[index]);
-              }
-              ),
-          ),
-
-        
+      key: const ValueKey('groupsScaffold'),
+      body: Obx(
+        () => ListView.builder(
+          itemCount: firestoreController.groups.length,
+          itemBuilder: (context, index) =>
+              _buildItem(context, firestoreController.groups[index]),
         ),
-        floatingActionButton: FloatingActionButton(
-          key: const ValueKey("addGroupAction"),
-          child: const Icon(Icons.add),
-          onPressed: () {
-            // TODO
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddGroupPage()),
-            );
-         },
-        ));
-  }
-
-  Future<void> addGroup(id, student1, student2) async {
-    firebaseController.addGoup(id, student1, student2);
+      ),
+      floatingActionButton: FloatingActionButton(
+        key: const ValueKey('addGroupAction'),
+        child: const Icon(Icons.add),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddGroupPage()),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildItem(BuildContext context, Group group) {
@@ -58,7 +37,7 @@ class _GroupWidgetState extends State<GroupWidget> {
       key: ValueKey(group.groupId),
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Card(
-        key: const ValueKey("groupCard"),
+        key: const ValueKey('groupCard'),
         elevation: 2,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -72,8 +51,9 @@ class _GroupWidgetState extends State<GroupWidget> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [Text(group.student1), Text(group.student2)]),
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [Text(group.student1), Text(group.student2)],
+            ),
           ),
         ),
       ),

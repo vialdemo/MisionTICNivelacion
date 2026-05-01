@@ -1,89 +1,74 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:get/get.dart';
 import 'package:loggy/loggy.dart';
 import 'package:misiontic_team_management/data/model/group.dart';
 import 'package:misiontic_team_management/data/model/sesion.dart';
 
-class FirestoreController extends GetxController {
-  var _groups = <Group>[].obs;
-  var _sesions = <Sesion>[].obs;
+class FirestoreController extends GetxController with UiLoggy {
+  final _groups = <Group>[].obs;
+  final _sesions = <Sesion>[].obs;
 
-  final CollectionReference groupCollectionReference =
+  final CollectionReference _groupCollection =
       FirebaseFirestore.instance.collection('groups');
-  final Stream<QuerySnapshot> _gruopStream = FirebaseFirestore.instance
+  final Stream<QuerySnapshot> _groupStream = FirebaseFirestore.instance
       .collection('groups')
       .orderBy('groupId')
       .snapshots();
-  late StreamSubscription<Object?> groupStreamSubscription;
+  late StreamSubscription<QuerySnapshot> _groupSubscription;
 
-  final CollectionReference sesionCollectionReference =
+  final CollectionReference _sesionCollection =
       FirebaseFirestore.instance.collection('sesions');
   final Stream<QuerySnapshot> _sesionStream = FirebaseFirestore.instance
       .collection('sesions')
       .orderBy('date')
       .snapshots();
-  late StreamSubscription<Object?> sesionStreamSubscription;
+  late StreamSubscription<QuerySnapshot> _sesionSubscription;
 
-  suscribeUpdates() async {
-    logInfo('suscribeLocationUpdates');
-    groupStreamSubscription = _gruopStream.listen((event) {
-      logInfo('Got new item from fireStore');
-      _groups.clear();
-      for (var element in event.docs) {
-        _groups.add(Group.fromSnapshot(element));
-      }
-      logInfo('Got grups ${_groups.length}');
+  void subscribeUpdates() {
+    loggy.info('subscribeUpdates');
+    _groupSubscription = _groupStream.listen((event) {
+      loggy.info('Groups snapshot received');
+      _groups.value = event.docs.map((e) => Group.fromSnapshot(e)).toList();
+      loggy.info('Groups count: ${_groups.length}');
     });
 
-    sesionStreamSubscription = _sesionStream.listen((event) {
-      logInfo('Got new item from fireStore');
-      _sesions.clear();
-      for (var element in event.docs) {
-        _sesions.add(Sesion.fromSnapshot(element));
-      }
-      logInfo('Got grups ${_groups.length}');
+    _sesionSubscription = _sesionStream.listen((event) {
+      loggy.info('Sesions snapshot received');
+      _sesions.value = event.docs.map((e) => Sesion.fromSnapshot(e)).toList();
+      loggy.info('Sesions count: ${_sesions.length}');
     });
   }
 
-  unsuscribeUpdates() {
-    groupStreamSubscription.cancel();
-    sesionStreamSubscription.cancel();
+  void unsubscribeUpdates() {
+    _groupSubscription.cancel();
+    _sesionSubscription.cancel();
   }
 
   List<Group> get groups => _groups;
   List<Sesion> get sesions => _sesions;
 
   List<String> groupIds() {
-    List<String> list = [];
-    for (var element in _groups) {
-      list.add('Grupo ' + element.groupId.toString());
-    }
-    return list;
+    return _groups.map((g) => 'Grupo ${g.groupId}').toList();
   }
 
-  addGoup(groupId, student1, student2) {
-    groupCollectionReference
-        .add({
-          'groupId': groupId,
-          'student1': student1,
-          'student2': student2,
-        })
-        .then((value) => logInfo("Group added"))
-        .catchError((onError) => logError("Failed to add baby $onError"));
+  void addGroup(String groupId, String student1, String student2) {
+    _groupCollection
+        .add({'groupId': groupId, 'student1': student1, 'student2': student2})
+        .then((_) => loggy.info('Group added'))
+        .catchError((e) => loggy.error('Failed to add group: $e'));
   }
 
-  addSesion(groupId, student1, student2) {
-    sesionCollectionReference
+  void addSesion(String groupId, bool student1, bool student2) {
+    _sesionCollection
         .add({
           'date': DateTime.now(),
           'groupId': groupId,
           'student1': student1,
           'student2': student2,
         })
-        .then((value) => logInfo("Sesion added"))
-        .catchError((onError) => logError("Failed to add baby $onError"));
+        .then((_) => loggy.info('Sesion added'))
+        .catchError((e) => loggy.error('Failed to add sesion: $e'));
   }
 }
